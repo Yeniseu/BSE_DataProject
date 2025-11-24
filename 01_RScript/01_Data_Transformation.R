@@ -156,3 +156,4 @@ data_transformed <- fredmd(
   transform = TRUE
 )
 
+write.csv("03_Output\01_Data_Transformed.csv")

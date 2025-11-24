@@ -7,7 +7,7 @@
 rm(list = ls())
 
 # load data
-data_transformed <- readRDS("03_Input/data_transformed.rds")
+data_transformed <- readRDS("02_Input/data_transformed.rds")
 
 # data_transformed has 800 obs and 127 variables
 

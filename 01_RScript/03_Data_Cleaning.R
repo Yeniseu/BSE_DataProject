@@ -7,8 +7,7 @@
 rm(list = ls())
 
 # load data
-folder_path <- "C:/Users/sianeselli/OneDrive - Charles River Associates International/A. BSE/Data science-LONSIANESELLI2/Group Project/BSE_DataProject/03_Output"
-data_transformed <- readRDS(file.path(folder_path, "data_transformed.rds"))
+data_transformed <- readRDS("03_Input/data_transformed.rds")
 
 # data_transformed has 800 obs and 127 variables
 

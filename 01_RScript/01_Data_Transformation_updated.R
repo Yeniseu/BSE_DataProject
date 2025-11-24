@@ -10,7 +10,7 @@ library(readr)
 # ============================================
 # 1. LOAD DATA
 # ============================================
-file <- "C:/Users/sianeselli/OneDrive - Charles River Associates International/A. BSE/Data science-LONSIANESELLI2/Group Project/BSE_DataProject/02_Input/2025-09-MD.csv"
+file <- "02_Input/2025-09-MD.csv"
 
 # define the fredmd function 
 fredmd <- function(file = "", date_start = NULL, date_end = NULL, transform = TRUE) {
@@ -166,10 +166,9 @@ data_transformed <- fredmd(
   transform = TRUE
 )
 
-View(data_transformed)
+#View(data_transformed)
 
 # save dataset
-folder_path <- "C:/Users/sianeselli/OneDrive - Charles River Associates International/A. BSE/Data science-LONSIANESELLI2/Group Project/BSE_DataProject/03_Output"
-saveRDS(data_transformed, file = file.path(folder_path, "data_transformed.rds"))
+saveRDS(data_transformed, file = "02_Input/data_transformed.rds")
 
 

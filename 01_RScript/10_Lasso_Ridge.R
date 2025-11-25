@@ -1,98 +1,76 @@
-# Author: Orhun Ozel
-# Date: 24/11/2025
-# Scope: Apply Lasso Ridge Elastic Net to Time Series
-# Find lamda with out of sample forecast performance
-
 library(data.table)
 library(glmnet)
+rm(list = ls())
+options(print.max = 300, scipen = 30, digits = 5)
 
-rm(list=ls())
-options(print.max = 300)
-options(scipen = 30)
-options(digits = 5)
-
-### Load Data
+### Load & prepare
 fred <- readRDS("02_Input/data_transformed.rds")
 setDT(fred)
 setnames(fred, "CPIAUCSL", "inf")
 setcolorder(fred, c("date", "inf"))
 
-### Create Reg Variables
-fred <- na.omit(fred, cols="inf")
-Y <- fred$inf
-X <- fred[, -c("date", "inf")]
-X <- X[, sapply(X, function(x) sum(is.na(x))) == 0, with = F]
-X <- scale(X) # Standardize predictors
+fred <- na.omit(fred, cols = "inf")  ## Remove rows if inflation is NA
+Y    <- fred$inf
+Xdt  <- fred[, -c("date", "inf")]  
+Xdt  <- Xdt[, sapply(Xdt, function(x) sum(is.na(x))==0), with = F]  # Drop cols with NA
+X    <- as.matrix(Xdt)
 
-
-# Rolling Window Lasso/Ridge/Elastic Net (time-series CV for lambda)
-rolling_glmnet <- function(Y, X, window, alpha, lambda_grid = 10^seq(-3, 1, length = 20)) {
-  n <- length(Y)
-  preds <- rep(NA, n - window)
+### Rolling glmnet with forward TS-CV for lambda
+rolling_glmnet_ts <- function(y_all, X_all, window_size, train_size, alpha) {
+  #browser()
+  y      <- y_all[1:train_size]
+  X      <- X_all[1:train_size, ]
+  n      <- length(y)
+  n_out  <- n - window_size
+  window <- window_size
   
-  for (i in 1:(n - window)) {
-    idx <- i:(i + window - 1)
-    y_train <- Y[idx]
-    x_train <- as.matrix(X[idx, ])
-    x_new   <- as.matrix(X[i + window, , drop = FALSE])
+  # Create lambda grid automatically
+  fit0 <- glmnet(X[1:window, , drop = F], y[1:window], 
+                 alpha = alpha, standardize = T)
+  lambda_grid <- fit0$lambda
+  
+  err_sum   <- rep(0, times = length(lambda_grid))
+  err_count <- 0
+  # Create each rolling window, then forecast using every lambda
+  for (k in 1:n_out) {
+    y_window   <- y[(1:window)+ k-1]
+    X_window   <- X[(1:window)+ k-1, , drop = F]
+    X_forecast <- X[window + k     , , drop = F]
     
-    # --- Skip if y_train is constant ---
-    if (length(unique(y_train)) <= 1) {
-      preds[i] <- y_train[1]  # fallback: repeat value
-      next
+    # TS-CV: expanding 1-step-ahead within the window
+    
+    mse <- NA
+    for (j in seq_along(lambda_grid)) {
+      lam <- lambda_grid[j]
+      fit <- glmnet(X_window, y_window, alpha=alpha, lambda=lam, standardize=T)
+      yhat <- as.numeric(predict(fit, X_forecast))
+      err_sum[j] <- err_sum[j] + (y[window + k] - yhat)^2
     }
-    
-    # --- time-series CV for lambda selection ---
-    cv_mse <- sapply(lambda_grid, function(lambda) {
-      y_hat <- numeric(length(y_train) - 1)
-      for (t in 2:length(y_train)) {
-        # skip if the first t-1 observations are constant
-        if (length(unique(y_train[1:(t-1)])) <= 1) {
-          y_hat[t-1] <- y_train[t-1]
-        } else {
-          fit <- glmnet(as.matrix(x_train[1:(t-1), , drop = FALSE]), 
-                        y_train[1:(t-1)], 
-                        alpha = alpha, lambda = lambda)
-          y_hat[t-1] <- predict(fit, as.matrix(x_train[t, , drop = FALSE]))
-        }
-      }
-      mean((y_train[2:length(y_train)] - y_hat)^2)
-    })
-    
-    best_lambda <- lambda_grid[which.min(cv_mse)]
-    final_fit <- glmnet(x_train, y_train, alpha = alpha, lambda = best_lambda)
-    preds[i] <- predict(final_fit, x_new)
+    err_count  <- err_count + 1
   }
+  mse <- err_sum / err_count
+  # best lambda
+  best_lam <- lambda_grid[which.min(mse)]
   
+  # final fit on full window
+  fit_full <- glmnet(X, y, alpha=alpha, lambda=best_lam, standardize=T)
+  preds <- as.numeric(predict(fit_full, tail(X, n_out)))
   preds
 }
 
 
-# Alternative: Rolling Window Lasso Ridge Function
-rolling_glmnet <- function(Y, X, window, alpha) {
-  browser()
-  n <- length(Y)
-  preds <- NA
-  
-  for (i in 1:(n - window)) {
-    idx <- i:(i + window - 1)
-    y_train <- Y[idx]
-    x_train <- X[idx, ]
-    x_new   <- X[i + window, , drop = FALSE]
-    
-    fit <- cv.glmnet(x_train, y_train, alpha = alpha)
-    preds[i] <- predict(fit, x_new)
-  }
-  preds
-}
+### Run models
+w <- 60  # 5 years of monthly data
+t_s <- 240
+pred_lasso <- rolling_glmnet_ts(Y, X, window = w, train_size=t_s, alpha = 1)     # Lasso
+pred_ridge <- rolling_glmnet_ts(Y, X, window = w, alpha = 0)     # Ridge
+pred_elnet <- rolling_glmnet_ts(Y, X, window = w, alpha = 0.5)   # Elastic Net
 
-
-# Run Models
-w <- 12    # rolling window = 1 years
-
-pred_lasso <- rolling_glmnet(Y, X, w, alpha = 1)
-pred_ridge <- rolling_glmnet(Y, X, w, alpha = 0)
-pred_enet  <- rolling_glmnet(Y, X, w, alpha = 0.5)
-
-# Show forecasts 
-tail(cbind(pred_lasso, pred_ridge, pred_enet))
+# Align forecasts with actual Y (they start at t = w+1)
+y_actual <- Y[(w + 1):length(Y)]
+tail(cbind(
+  y_actual   = y_actual,
+  lasso_hat  = pred_lasso,
+  ridge_hat  = pred_ridge,
+  enet_hat   = pred_enet
+))

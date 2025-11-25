@@ -75,4 +75,8 @@ data_cleaned <- data_cleaned[, setdiff(names(data_cleaned),
 
 # now the data has 780 obs and 122 variables
 
-# TO DO: deal with variables CP3Mx and COMPAPFFx which only have 2 and 1 missing values respectively in 2020
+# TO DO: deal with variables CP3Mx (3-Month AA Financial Commercial Paper Rate)
+# Commercial paper is an unsecured, short-term debt instrument issued by corporations. It's typically used to finance short-term liabilities such as payroll, accounts payable (AP), and inventories.
+# and COMPAPFFx ( 3-Month Commercial Paper Minus FEDFUNDS - Effective Federal Funds Rate)
+# The effective federal funds rate (EFFR) is the interest rate at which depository institutions lend reserve balances to other depository institutions overnight.
+# which only have 2 and 1 missing values respectively in 2020

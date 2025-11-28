@@ -73,6 +73,9 @@ na_summary_list
 data_cleaned <- data_cleaned[, setdiff(names(data_cleaned), 
                                        c("ACOGNO", "UMCSENTx", "TWEXAFEGSMTHx", "ANDENOx", "VIXCLSx"))]
 
+# save dataset
+saveRDS(data_cleaned, file = "02_Input/data_cleaned.rds")
+
 # now the data has 780 obs and 122 variables
 
 # TO DO: deal with variables CP3Mx (3-Month AA Financial Commercial Paper Rate)

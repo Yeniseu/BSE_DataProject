@@ -208,5 +208,8 @@ for (col in na_cols) {
   cat(sprintf("%s: %.4f\n", col, mean(data_cleaned[[col]])))
 }
 
+# Multiple CPIAUCSL by 100 to easily read it as inflation (After log transformation 5)
+data_cleaned$CPIAUCSL <- data_cleaned$CPIAUCSL*100
+
 # save dataset
 saveRDS(data_cleaned, file = "02_Input/data_cleaned.rds")

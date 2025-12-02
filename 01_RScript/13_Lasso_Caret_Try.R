@@ -6,7 +6,7 @@ rm(list = ls())
 options(print.max = 300, scipen = 30, digits = 5)
 
 ### Load & prepare
-fred <- readRDS("02_Input/data_transformed.rds")
+fred <- readRDS("02_Input/data_cleaned.rds")
 setDT(fred)
 setnames(fred, "CPIAUCSL", "inf")
 setcolorder(fred, c("date", "inf"))
@@ -19,7 +19,7 @@ X    <- as.matrix(Xdt)
 
 ### Rolling glmnet with forward TS-CV for lambda
 rolling_window_fcast <- function(y, X, window_size, step=1, alpha_lasso, lambda_lasso, anchored=F) {
-  browser()
+
   n      <- length(y)
   n_out  <- n - window_size
   window <- window_size
@@ -44,9 +44,11 @@ rolling_window_fcast <- function(y, X, window_size, step=1, alpha_lasso, lambda_
     y_hat <- as.numeric(predict(fit, test[[i]][,  colnames(all_variables) != "y"]))
     y_hat_all[,i] <- y_hat
   }
-  
-  mse <- err_sum / err_count
-  rolling_res <- list("mse" = mse, "forecast" = forecast)
+  bias <- rowMeans(y_true_all - y_hat_all)
+  bias_percantage <- abs(bias)/abs(rowMeans(y_true_all))
+  bias_percantage
+  rmse <- sqrt(rowMeans((y_true_all - y_hat_all)^2))
+  rolling_res <- list("rmse" = rmse, "forecast" = y_hat_all, "real" = y_true_all)
   rolling_res
 }
 
@@ -60,7 +62,7 @@ get_best_lambda <- function(y, X, window_size, step, alpha_lasso) {
   rolling_mse <- NA
   for (i in 1:length(lambda_grid)) {
     #browser()
-    rolling_res[[i]] <- rolling_window_fcast(y, X, window_size, step=1, alpha_lasso, 
+    rolling_res[[i]] <- rolling_window_fcast(y, X, window_size, step=step, alpha_lasso, 
                                              lambda_grid[i], anchored=F)
     rolling_mse[i] <- rolling_res[[i]]$mse
   }
@@ -77,7 +79,7 @@ rolling_glmnet_ts <- function(y_all, X_all, window_size, train_size, step=1, alp
   fcast_index <- (train_size+1):length(y_all)
   y      <- y_all[train_index]
   X      <- X_all[train_index, ,drop=F]
-  best_lam <- get_best_lambda(y, X, window_size, step, alpha_lasso)
+  best_lam <- get_best_lambda(y, X, window_size, step=step, alpha_lasso)
   fit_full <- glmnet(X, y, alpha=alpha_lasso, lambda=best_lam, standardize=T)
   preds <- as.numeric(predict(fit_full, X_all[fcast_index, , drop=F]))
   preds
@@ -86,7 +88,7 @@ rolling_glmnet_ts <- function(y_all, X_all, window_size, train_size, step=1, alp
 ### Run models
 w <- 120  # 10 years of monthly data
 t_s <- 240
-pred_lasso <- rolling_glmnet_ts(Y, X, window = w, train_size=t_s, alpha = 1)     # Lasso
+pred_lasso <- rolling_glmnet_ts(Y, X, window = w, train_size=t_s, step=2, alpha = 1)     # Lasso
 pred_ridge <- rolling_glmnet_ts(Y, X, window = w, alpha = 0)     # Ridge
 pred_elnet <- rolling_glmnet_ts(Y, X, window = w, alpha = 0.5)   # Elastic Net
 

@@ -57,7 +57,8 @@ fredmd <- function(file = "", date_start = NULL, date_end = NULL, transform = TR
   header <- c("date", unlist(attrdata[1,2:ncol(attrdata)]))
   colnames(rawdata) <- header
   
-  
+  # Change the transformation of inflation to 5
+  attrdata[2, attrdata[1, ] == "CPIAUCSL"] <- "5"  
   # Store transformation codes as tcode
   tcode <- unlist(attrdata[2,2:ncol(attrdata)])
   
@@ -161,10 +162,7 @@ fredmd <- function(file = "", date_start = NULL, date_end = NULL, transform = TR
 # ============================================
 
 # Get transformed data
-data_transformed <- fredmd(
-  file,
-  transform = TRUE
-)
+data_transformed <- fredmd(file, transform = TRUE)
 
 #View(data_transformed)
 

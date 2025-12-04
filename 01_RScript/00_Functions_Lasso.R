@@ -51,13 +51,14 @@ runlasso <- function(Y, indice, lag, alpha=1, type="lasso", lambda, learn_lambda
 }
 
 
-get_best_lambda <- function(Y,npred,indice=1,lag=1,alpha=1, type="lasso", nlambda=25) {
+get_best_lambda <- function(Y,npred,indice=1,lag=1,alpha=1, type="lasso", nlambda=25, window = 360) {
   # Create lambda grid automatically
   lambda_grid <- runlasso(Y[1:(nrow(Y)-npred),],indice,lag,alpha,type,0,learn_lambda_grid=T, nlambda=nlambda)
   # Check the grid one by one
   save_res <- list(NA)
   for (i in 1:length(lambda_grid)) {
-    save_res[[i]] <- lasso_roll_win(Y,npred,indice,lag,alpha,type,lambda_grid[i])
+    new_res <- lasso_roll_win(Y,npred,indice,lag,alpha,type,lambda_grid[i])
+    save_res[[i]] <- c(list("lambda"=lambda_grid[i]), new_res)
   }
   # Select best lambda with lowest rmse
   rmse <- sapply(save_res, function(x) x$errors[1])
@@ -93,11 +94,12 @@ lasso_roll_win <- function(Y,npred,indice=1,lag=1,alpha=1, type="lasso", lambda)
 
 elnet_roll_win <- function(Y, npred, indice=1, lag=1, alpha="el", lambda) {
   if(alpha == "el") alpha <- seq(0, 1, 0.1)
-  all_elnet_res <- list(NA)
+  save_res <- list(NA)
   for(i in 1:length(alpha)) {
-    all_elnet_res[[i]] <- lasso_roll_win(Y, npred, indice, lag, alpha[i], "lasso", lambda)
+    new_res <- lasso_roll_win(Y, npred, indice, lag, alpha[i], "lasso", lambda)
+    save_res[[i]] <- c(list("alpha" = alpha[i]), new_res)  # Append the list
   }
-  return(all_elnet_res)
+  return(save_res)
 }
 
 

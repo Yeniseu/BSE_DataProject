@@ -51,13 +51,13 @@ runlasso <- function(Y, indice, lag, alpha=1, type="lasso", lambda, learn_lambda
 }
 
 
-get_best_lambda <- function(Y,nprev,indice=1,lag=1,alpha=1, type="lasso", nlambda=25) {
+get_best_lambda <- function(Y,npred,indice=1,lag=1,alpha=1, type="lasso", nlambda=25) {
   # Create lambda grid automatically
-  lambda_grid <- runlasso(Y[1:(nrow(Y)-nprev),],indice,lag,alpha,type,0,learn_lambda_grid=T, nlambda=nlambda)
+  lambda_grid <- runlasso(Y[1:(nrow(Y)-npred),],indice,lag,alpha,type,0,learn_lambda_grid=T, nlambda=nlambda)
   # Check the grid one by one
   save_res <- list(NA)
   for (i in 1:length(lambda_grid)) {
-    save_res[[i]] <- lasso_roll_win(Y,nprev,indice,lag,alpha,type,lambda_grid[i])
+    save_res[[i]] <- lasso_roll_win(Y,npred,indice,lag,alpha,type,lambda_grid[i])
   }
   # Select best lambda with lowest rmse
   rmse <- sapply(save_res, function(x) x$errors[1])
@@ -67,25 +67,38 @@ get_best_lambda <- function(Y,nprev,indice=1,lag=1,alpha=1, type="lasso", nlambd
 }
 
 
-lasso_roll_win <- function(Y,nprev,indice=1,lag=1,alpha=1, type="lasso", lambda) {
-  save.coef <- matrix(NA,nprev,21-3+ncol(Y[,-1])*4-1 )
-  save.pred <- matrix(NA,nprev,1)
-  for(i in nprev:1){
-    Y.window <- Y[(1+nprev-i):(nrow(Y)-i),]
-    #browser()
+lasso_roll_win <- function(Y,npred,indice=1,lag=1,alpha=1, type="lasso", lambda) {
+  save.coef <- matrix(NA,npred,21-3+ncol(Y[,-1])*4-1 )
+  save.pred <- matrix(NA,npred,1)
+
+  for(i in npred:1){
+    Y.window <- Y[(1+npred-i):(nrow(Y)-i),]
     lasso    <- runlasso(Y.window,indice,lag,alpha,type,lambda)
-    #browser()
-    save.coef[(1+nprev-i),] <- as.vector(lasso$model$beta)
-    save.pred[(1+nprev-i),] <- lasso$pred
-    cat("iteration",(1+nprev-i),"\n")
+    save.coef[(1+npred-i),] <- as.vector(lasso$model$beta)
+    save.pred[(1+npred-i),] <- lasso$pred
+    cat("iteration",(1+npred-i),"\n")
   }
   real <- Y[,indice]
   plot(real,type="l")
-  lines(c(rep(NA,length(real)-nprev),save.pred),col="red")
+  lines(c(rep(NA,length(real)-npred),save.pred),col="red")
   
-  rmse   <- sqrt(mean((tail(real,nprev)-save.pred)^2))
-  mae    <- mean(abs(tail(real,nprev)-save.pred))
+  rmse   <- sqrt(mean((tail(real,npred)-save.pred)^2))
+  mae    <- mean(abs(tail(real,npred)-save.pred))
   errors <- c("rmse"=rmse,"mae"=mae)
   
-  return(list("pred"=save.pred,"coef"=save.coef,"errors"=errors))
+  return(list("pred"=as.numeric(save.pred),"real"=tail(real,npred),
+              "coef"=save.coef,"errors"=errors))
 }
+
+
+elnet_roll_win <- function(Y, npred, indice=1, lag=1, alpha="el", lambda) {
+  if(alpha == "el") alpha <- seq(0, 1, 0.1)
+  all_elnet_res <- list(NA)
+  for(i in 1:length(alpha)) {
+    all_elnet_res[[i]] <- lasso_roll_win(Y, npred, indice, lag, alpha[i], "lasso", lambda)
+  }
+  return(all_elnet_res)
+}
+
+
+  

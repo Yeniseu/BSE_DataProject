@@ -57,7 +57,14 @@ fredmd <- function(file = "", date_start = NULL, date_end = NULL, transform = TR
   header <- c("date", unlist(attrdata[1,2:ncol(attrdata)]))
   colnames(rawdata) <- header
   
-  
+  # Change the transformation of price indices to 5
+  # so that they are log-differenced only one time
+  price_indices <- c(  "WPSFD49207","WPSFD49502","WPSID61","WPSID62","OILPRICEx",
+                       "PPICMM","NAPMPRI","CPIAUCSL","CPIAPPSL","CPITRNSL","CPIMEDSL",
+                       "CUSR0000SAC","CUUR0000SAD","CUSR0000SAS","CPIULFSL",
+                       "CUUR0000SA0L2","CUSR0000SA0L5","PCEPI",
+                       "DDURRG3M086SBEA","DNDGRG3M086SBEA","DSERRG3M086SBEA")
+  attrdata[2, attrdata[1, ] %in% price_indices] <- "5"  
   # Store transformation codes as tcode
   tcode <- unlist(attrdata[2,2:ncol(attrdata)])
   
@@ -161,10 +168,7 @@ fredmd <- function(file = "", date_start = NULL, date_end = NULL, transform = TR
 # ============================================
 
 # Get transformed data
-data_transformed <- fredmd(
-  file,
-  transform = TRUE
-)
+data_transformed <- fredmd(file, transform = TRUE)
 
 #View(data_transformed)
 

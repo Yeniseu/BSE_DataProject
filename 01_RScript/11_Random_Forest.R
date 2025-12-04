@@ -8,6 +8,8 @@ library(randomForest)
 rm(list = ls())
 options(print.max = 300, scipen = 30, digits = 5)
 
+source("01_RScript/00_Functions_RF.R")
+
 #### Load & prepare ####
 
 fred <- readRDS("02_Input/data_cleaned.rds")
@@ -17,61 +19,6 @@ dim(fred)
 setnames(fred, "CPIAUCSL", "inf")
 setcolorder(fred, c("date", "inf"))
 
-#### FUNCTIONS ####
-
-# rf function
-runrf=function(Y,indice,lag){
-  
-  dum=Y[,ncol(Y)]
-  Y=Y[,-ncol(Y)]
-  comp=princomp(scale(Y,scale=FALSE))
-  Y2=cbind(Y,comp$scores[,1:4])
-  aux=embed(Y2,4+lag)
-  y=aux[,indice]
-  X=aux[,-c(1:(ncol(Y2)*lag))]  
-  
-  if(lag==1){
-    X.out=tail(aux,1)[1:ncol(X)]  
-  }else{
-    X.out=aux[,-c(1:(ncol(Y2)*(lag-1)))]
-    X.out=tail(X.out,1)[1:ncol(X)]
-  }
-  
-  dum=tail(dum,length(y))
-  
-  model=randomForest(cbind(X,dum),y,importance = TRUE)
-  pred=predict(model,c(X.out,0))
-  
-  return(list("model"=model,"pred"=pred))
-}
-
-
-# rolling window setting
-rf.rolling.window=function(Y,nprev,indice=1,lag=1){
-  
-  save.importance=list()
-  save.pred=matrix(NA,nprev,1)
-  for(i in nprev:1){
-    Y.window=Y[(1+nprev-i):(nrow(Y)-i),]
-    random_forest=runrf(Y.window,indice,lag)
-    save.pred[(1+nprev-i),]=random_forest$pred
-    #save.importance[[i]]=importance(random_forest$model)
-    save.importance[[1 + nprev - i]] = importance(random_forest$model)
-    cat("iteration",(1+nprev-i),"\n")
-  }
-  
-  real=Y[,indice]
-  plot(real,type="l")
-  lines(c(rep(NA,length(real)-nprev),save.pred),col="red")
-
-  
-  rmse=sqrt(mean((tail(real,nprev)-save.pred)^2))
-  mae=mean(abs(tail(real,nprev)-save.pred))
-  errors=c("rmse"=rmse,"mae"=mae)
-  
-  return(list("pred"=save.pred,"real"=real,"errors"=errors,"save.importance"=save.importance))
-}
-
 #### TUNING ####
 
 Y <- fred[date < "2001-01-01"]
@@ -80,9 +27,46 @@ Y <- as.matrix(Y)
 dim(Y)
 
 # Validation Data Length = 120 (between years 1991-2000)
-nprev <- 180
+nprev <- 60
+
+# mtry grid
+p = 520 # number of features
+mtry_grid <- c(2, 3, 5, 8, 10, 15, 25, round(p/10), round(p/8), round(p/6), round(p/4),
+               round(p/3), round(p/2))
+
+results_mtry <- data.frame(
+  mtry = mtry_grid,
+  rmse = NA_real_,
+  mae  = NA_real_
+)
+
+# Grid search
+for (k in seq_along(mtry_grid)) {
+  cat("\n==== Testing mtry =", mtry_grid[k], "====\n")
+  
+  set.seed(123)
+  out_k <- rf.rolling.window_tune_mtry(Y, nprev, 1, 1, nfeature = mtry_grid[k])
+  results_mtry$rmse[k] <- out_k$errors["rmse"]
+  results_mtry$mae[k]  <- out_k$errors["mae"]
+}
+
+results_mtry
+
+# best mtry
+best_idx  <- which.min(results_mtry$rmse)
+best_mtry <- results_mtry$mtry[best_idx]
+
+best_mtry
 
 
+
+
+
+
+
+set.seed(123)
+
+rf1_1 <- rf.rolling.window(Y,nprev,1,1)
 
 #### PREDICTIONS ####
 

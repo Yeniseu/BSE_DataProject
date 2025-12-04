@@ -57,8 +57,10 @@ best_idx  <- which.min(results_mtry$rmse)
 best_mtry <- results_mtry$mtry[best_idx]
 
 best_mtry
-
-
+library(ggplot2)
+ggplot(results_mtry, aes(x=mtry, y=rmse)) + geom_line() + theme_light() + 
+  geom_vline(xintercept=best_mtry, linetype="dashed", color="red")
+saveRDS(results_mtry, file = "03_Output/rfres_mtry.rds")
 
 
 

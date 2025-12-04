@@ -30,12 +30,17 @@ npred1 <- nrow(dt_s1) - fred[, which(date=="2000-12-01")]  # 180
 best_lam_all_1 <- get_best_lambda(dt_s1, npred1, 1, lag=1, alpha=1, nlambda=25)  #0.016912
 best_lam_1 <- best_lam_all_1$best_lam
 #best_lam_1 <- 0.016912
-lasso_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=1   , lambda=best_lam_1)
-lasso_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=1   , lambda=best_lam_1)
-ridge_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=0   , lambda=best_lam_1)
-ridge_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=0   , lambda=best_lam_1)
-elnet_s1_l1 <- elnet_roll_win(dt_s1, npred1, 1, lag=1, alpha="el", lambda=best_lam_1)
-elnet_s1_l3 <- elnet_roll_win(dt_s1, npred1, 1, lag=3, alpha="el", lambda=best_lam_1)
+best_alp_all_1 <- get_best_alpha(dt_s1, npred1, 1, lag=1, alpha_grid="el", lambda=best_lam_1)
+best_alp_1 <- best_alp_all_1$best_lam  # 0.6
+balp1 <- best_alp_1
+#balp1 <- 0.6
+
+lasso_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=1    , lambda=best_lam_1)
+lasso_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=1    , lambda=best_lam_1)
+ridge_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=0    , lambda=best_lam_1)
+ridge_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=0    , lambda=best_lam_1)
+elnet_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=balp1, lambda=best_lam_1)
+elnet_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=balp1, lambda=best_lam_1)
 
 ## Sample 2: Train: 1960-01-01:2015-12-01.  Test: 2016-01-01:2024-12-01
 npred2 <- nrow(fred) - fred[, which(date=="2015-12-01")]  # 108 as of 2024-12-01
@@ -43,12 +48,12 @@ npred2 <- nrow(fred) - fred[, which(date=="2015-12-01")]  # 108 as of 2024-12-01
 #best_lam_2 <- best_lam_all_2$best_lam
 #best_lam_2 <- 0.0091218
 best_lam_2 <- best_lam_1
-lasso_s2_l1 <- lasso_roll_win(dt_s2, npred2, 1, lag=1, alpha=1   , lambda=best_lam_2)
-lasso_s2_l3 <- lasso_roll_win(dt_s2, npred2, 1, lag=3, alpha=1   , lambda=best_lam_2)
-ridge_s2_l1 <- lasso_roll_win(dt_s2, npred2, 1, lag=1, alpha=0   , lambda=best_lam_2)
-ridge_s2_l3 <- lasso_roll_win(dt_s2, npred2, 1, lag=3, alpha=0   , lambda=best_lam_2)
-elnet_s2_l1 <- elnet_roll_win(dt_s2, npred2, 1, lag=1, alpha="el", lambda=best_lam_2)
-elnet_s2_l3 <- elnet_roll_win(dt_s2, npred2, 1, lag=3, alpha="el", lambda=best_lam_2)
+lasso_s2_l1 <- lasso_roll_win(dt_s2, npred2, 1, lag=1, alpha=1    , lambda=best_lam_2)
+lasso_s2_l3 <- lasso_roll_win(dt_s2, npred2, 1, lag=3, alpha=1    , lambda=best_lam_2)
+ridge_s2_l1 <- lasso_roll_win(dt_s2, npred2, 1, lag=1, alpha=0    , lambda=best_lam_2)
+ridge_s2_l3 <- lasso_roll_win(dt_s2, npred2, 1, lag=3, alpha=0    , lambda=best_lam_2)
+elnet_s2_l1 <- lasso_roll_win(dt_s2, npred2, 1, lag=1, alpha=balp1, lambda=best_lam_2)
+elnet_s2_l3 <- lasso_roll_win(dt_s2, npred2, 1, lag=3, alpha=balp1, lambda=best_lam_2)
 
 
 ridge_s2_l3$real
@@ -68,24 +73,17 @@ lambda_search <- sapply(best_lam_all_1$all_res, function(x) c("lambda"=x$lambda,
 lambda_search <- as.data.table(t(lambda_search))
 
 best_lam    <- lambda_search[rmse==min(rmse), lambda]
-lowest_rmse <- lambda_search[, min(rmse)]
 ggplot(lambda_search, aes(x=lambda, y=rmse)) + geom_line() + theme_light() + 
   geom_vline(xintercept=best_lam   , linetype="dashed", color="red") 
 ggplot(lambda_search) + aes(x=lambda, y =n   ) + geom_line() + theme_light() + 
   geom_vline(xintercept=best_lam, linetype="dashed", color="red")
 
 ## Alpha Grid Search for Elastic Net
-alpha_search_1 <- sapply(elnet_s1_l1, function(x) c("alpha"=x$alpha, x$errors, "sample"=1, "step"=1))
-alpha_search_2 <- sapply(elnet_s1_l3, function(x) c("alpha"=x$alpha, x$errors, "sample"=1, "step"=3))
-alpha_search_3 <- sapply(elnet_s2_l1, function(x) c("alpha"=x$alpha, x$errors, "sample"=2, "step"=1))
-alpha_search_4 <- sapply(elnet_s2_l3, function(x) c("alpha"=x$alpha, x$errors, "sample"=2, "step"=3))
-alpha_search <- cbind(alpha_search_1, alpha_search_2, alpha_search_3, alpha_search_4)
+alpha_search <- sapply(best_alp_all_1$all_res, function(x) c("alpha"=x$alpha, x$errors, "sample"=1, "step"=1))
 alpha_search <- as.data.table(t(alpha_search))
 alpha_search
 
-alpha_search_line1 <- alpha_search[sample==1 & step==1]
-best_alpha <- alpha_search_line1[rmse==min(rmse), alpha]
-low_rmse   <- alpha_search_line1[, min(rmse)]
+best_alpha <- alpha_search[rmse==min(rmse), alpha]
 ggplot(alpha_search_line1, aes(x=alpha, y=rmse)) + geom_line() + theme_light() + 
   geom_vline(xintercept=best_alpha, linetype="dashed", color="red") 
 

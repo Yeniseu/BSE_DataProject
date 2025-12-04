@@ -95,14 +95,18 @@ lasso_roll_win <- function(Y,npred,indice=1,lag=1,alpha=1, type="lasso", lambda,
 }
 
 
-elnet_roll_win <- function(Y, npred, indice=1, lag=1, alpha="el", lambda, plot=F) {
-  if(alpha == "el") alpha <- seq(0, 1, 0.1)
+get_best_alpha <- function(Y, npred, indice=1, lag=1, alpha_grid="el", lambda, plot=F) {
+  if(alpha_grid == "el") alpha_grid <- seq(0, 1, 0.1)
   save_res <- list(NA)
-  for(i in 1:length(alpha)) {
-    new_res <- lasso_roll_win(Y, npred, indice, lag, alpha[i], "lasso", lambda, plot=plot)
-    save_res[[i]] <- c(list("alpha" = alpha[i]), new_res)  # Append the list
+  for(i in 1:length(alpha_grid)) {
+    new_res <- lasso_roll_win(Y, npred, indice, lag, alpha_grid[i], "lasso", lambda, plot=plot)
+    save_res[[i]] <- c(list("alpha" = alpha_grid[i]), new_res)  # Append the list
   }
-  return(save_res)
+  # Select best alpha with lowest rmse
+  rmse <- sapply(save_res, function(x) x$errors[1])
+  best_alp <- alpha_grid[which.min(rmse)]
+  best_alp_all <- list(best_lam = best_alp, all_res = save_res)
+  return(best_alp_all)
 }
 
 

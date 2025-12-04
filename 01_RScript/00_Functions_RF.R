@@ -1,21 +1,3 @@
-# Author: Ece Tasan
-# Date: 3/12/2025
-# Scope: Apply Random Forest
-
-library(data.table)
-library(randomForest)
-
-rm(list = ls())
-options(print.max = 300, scipen = 30, digits = 5)
-
-#### Load & prepare ####
-
-fred <- readRDS("02_Input/data_cleaned.rds")
-setDT(fred)
-dim(fred)
-
-setnames(fred, "CPIAUCSL", "inf")
-setcolorder(fred, c("date", "inf"))
 
 #### FUNCTIONS ####
 
@@ -63,7 +45,7 @@ rf.rolling.window=function(Y,nprev,indice=1,lag=1){
   real=Y[,indice]
   plot(real,type="l")
   lines(c(rep(NA,length(real)-nprev),save.pred),col="red")
-
+  
   
   rmse=sqrt(mean((tail(real,nprev)-save.pred)^2))
   mae=mean(abs(tail(real,nprev)-save.pred))
@@ -71,54 +53,3 @@ rf.rolling.window=function(Y,nprev,indice=1,lag=1){
   
   return(list("pred"=save.pred,"real"=real,"errors"=errors,"save.importance"=save.importance))
 }
-
-#### TUNING ####
-
-Y <- fred[date < "2001-01-01"]
-Y <- Y[, date := NULL]
-Y <- as.matrix(Y)
-dim(Y)
-
-# Validation Data Length = 120 (between years 1991-2000)
-nprev <- 180
-
-
-
-#### PREDICTIONS ####
-
-# FIRST Out of Sample Predictions: 2001-2015
-
-Y <- fred[date < "2016-01-01"]
-Y <- Y[, date := NULL]
-Y <- as.matrix(Y)
-dim(Y)
-
-# Out of Sample Length = 180 (between years 2001-2015)
-nprev <- 180
-
-set.seed(123)
-rf1_1 <- rf.rolling.window(Y,nprev,1,1)
-
-rf1_3 <- rf.rolling.window(Y,nprev,1,3)
-
-rf1_1$errors
-rf1_1$pred
-
-
-# SECOND Out of Sample Predictions: 2016-2024
-
-Y <- fred
-Y <- Y[, date := NULL]
-Y <- as.matrix(Y)
-dim(Y)
-
-# Out of Sample Length = 108 (between years 2001-2015)
-nprev <- 108
-
-set.seed(123)
-rf2_1 <- rf.rolling.window(Y,nprev,1,1)
-
-rf2_3 <- rf.rolling.window(Y,nprev,1,3)
-
-rf2_1$errors
-rf2_3$pred

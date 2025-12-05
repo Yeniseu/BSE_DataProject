@@ -9,6 +9,10 @@ Y[,"CPI"] <- Y[,"CPI"]*100
 
 nprev=180
 alpha=0.5
+# Random Walk
+inf <- Y[,"CPI"]
+rw_s1_l1 <- sqrt(mean((tail(inf,nprev)-tail(shift(inf,1),nprev))^2))
+rw_s1_l3 <- sqrt(mean((tail(inf,nprev)-tail(shift(inf,3),nprev))^2))
 
 ## == presente == ##
 elasticnet1c=lasso.rolling.window(Y,nprev,1,1,alpha,type="lasso")

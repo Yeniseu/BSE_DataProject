@@ -84,10 +84,14 @@ nprev <- 180
 set.seed(123)
 rf1_1 <- rf.rolling.window(Y,nprev,1,1)
 
+saveRDS(rf1_1, file= "03_Output/rf1_1.rds")
+
+
 rf1_3 <- rf.rolling.window(Y,nprev,1,3)
 
 rf1_1$errors
 rf1_1$pred
+
 
 
 # SECOND Out of Sample Predictions: 2016-2024

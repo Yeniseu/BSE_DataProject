@@ -108,6 +108,9 @@ rf1_3$errors
 
 # SECOND Out of Sample Predictions: 2016-2024
 
+# Tuning Result: Best mtry result
+best_mtry <- 52
+
 Y <- fred
 Y <- Y[, date := NULL]
 Y <- as.matrix(Y)

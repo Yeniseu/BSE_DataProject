@@ -1,4 +1,12 @@
+# Author: Orhun Ozel
+# Date: 07/12/2025
+# Scope: Create Charts for Lasso Ridge ElNet
 
+cr_path <- function(output_file_name) {
+  output_chart_path <- paste0("03_Output/Charts/lasso_ridge/", output_file_name,".png")
+  return(output_chart_path)
+}
+  
 ### Create Charts
 ## Lambda Grid Search
 lambda_search_lasso <- sapply(best_lam_lasso_all_1$all_res, function(x) c("lambda"=x$lambda, x$errors, "n"=sum(x$coef[1,] != 0)))
@@ -20,6 +28,8 @@ ggplot(lambda_lasso, aes(x=lambda, y=rmse)) + geom_line() + theme_light() +
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank()
   )
+ggsave(filename = cr_path("lasso_1_rmse"), width=12, height=6, dpi=600)
+
 
 ggplot(lambda_lasso) + aes(x=lambda, y =n   ) + geom_line() + theme_light() + 
   geom_vline(xintercept=best_lam_lasso, linetype="dashed", color="red") +  
@@ -33,6 +43,7 @@ ggplot(lambda_lasso) + aes(x=lambda, y =n   ) + geom_line() + theme_light() +
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank()
   )
+ggsave(filename = cr_path("lasso_2_ncov"), width=12, height=6, dpi=600)
 
 ggplot(lambda_ridge, aes(x=lambda, y=rmse)) + geom_line() + theme_light() + 
   geom_vline(xintercept=best_lam_ridge, linetype="dashed", color="red") +
@@ -46,6 +57,7 @@ ggplot(lambda_ridge, aes(x=lambda, y=rmse)) + geom_line() + theme_light() +
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank()
   )
+ggsave(filename = cr_path("ridge_1_rmse"), width=12, height=6, dpi=600)
 
 ## Alpha Grid Search Table for Elastic Net
 alpha_search <- sapply(best_alp_all_1$all_res, function(x) c("alpha"=x$alpha, "lambda"=x$lambda, x$errors))
@@ -68,7 +80,8 @@ ggplot(alpha_search, aes(x=alpha, y=rmse)) + geom_line() + theme_light() +
     panel.grid.minor.x = element_blank()
   )
 
-table_elnet <- alpha_search[alpha>0 & alpha<1,] |>
+
+table_elnet <- alpha_search[alpha>0 & alpha<1, -c("mae")] |>
   transform(best = rmse == min(rmse)) |>
   gt() |>
   tab_header(title = html("Table: Elastic Net &alpha; and &lambda; Tuning Results")) |>
@@ -107,6 +120,7 @@ ggplot(coef_plot, aes(coef_name, coef, fill = coef > 0)) +
     axis.text.y = element_text(size = 11),
     legend.position = "none"
   ) + xlab("Variable") + ylab("Coefficients")
+ggsave(filename = cr_path("lasso_3_varimp"), width=12, height=6, dpi=600)
 
 # Graph Coef_Ridge
 low    <- coef_ridge[order(coef)][1:5]
@@ -124,6 +138,9 @@ ggplot(coef_plot, aes(coef_name, coef, fill = coef > 0)) +
     axis.text.y = element_text(size = 11),
     legend.position = "none"
   ) + xlab("Variable") + ylab("Coefficients")
+ggsave(filename = cr_path("ridge_2_varimp"), width=12, height=6, dpi=600)
+
+
 
 # Graph Coef_Elnet
 low    <- coef_elnet[order(coef)][1:5]
@@ -141,6 +158,7 @@ ggplot(coef_plot, aes(coef_name, coef, fill = coef > 0)) +
     axis.text.y = element_text(size = 11),
     legend.position = "none"
   ) + xlab("Variable") + ylab("Coefficients")
+ggsave(filename = cr_path("elnet_1_varimp"), width=12, height=6, dpi=600)
 
 
 

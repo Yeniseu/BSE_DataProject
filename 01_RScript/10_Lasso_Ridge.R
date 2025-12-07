@@ -1,6 +1,6 @@
 # Author: Orhun Ozel
 # Date: 26/11/2025
-# Scope: Apply Random Forest
+# Scope: Apply Lasso Ridge ElNet
 rm(list = ls())
 source("01_RScript/00_Functions_Lasso.R")
 library(data.table)
@@ -40,7 +40,7 @@ best_lam_ridge_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=0,
 blam_r1 <- best_lam_ridge_all_1$best_lam  # 1.57
 #blam_r1 <- 1.57
 # Select Alpha and Lambda for ElNet Lag1
-best_alp_all_1 <- get_best_alpha(Y_train_val1, npred1, 1, lag=1, alpha_grid="el", lambda="auto", nlambda=15)
+best_alp_all_1 <- get_best_alpha(Y_train_val1, npred1, 1, lag=1, alpha_grid="el", lambda="auto", nlambda=25)
 balp1   <- best_alp_all_1$best_alp  # 0.4
 blam_e1 <- best_alp_all_1$best_lam  # 0.6
 #balp_e1 <- 0.4

@@ -41,29 +41,35 @@ results_mtry <- data.frame(
   mae  = NA_real_
 )
 
-# Grid search
-for (k in seq_along(mtry_grid)) {
-  cat("\n==== Testing mtry =", mtry_grid[k], "====\n")
-  
-  set.seed(123)
-  out_k <- rf.rolling.window_tune_mtry(Y, nprev, 1, 1, nfeature = mtry_grid[k])
-  results_mtry$rmse[k] <- out_k$errors["rmse"]
-  results_mtry$mae[k]  <- out_k$errors["mae"]
-}
 
-results_mtry
+#
+##
+### Note: Parameter selection takes time. The results are calculated once and the
+### Note: values from this calculations are used in the following code. If a new
+### Note: optimization is wanted, the below code can be run with deleting the "#"s. 
+##
+#
 
-# best mtry
+### Grid search best mtry
+#for (k in seq_along(mtry_grid)) {
+#  cat("\n==== Testing mtry =", mtry_grid[k], "====\n")
+#  
+#  set.seed(123)
+#  out_k <- rf.rolling.window_tune_mtry(Y, nprev, 1, 1, nfeature = mtry_grid[k])
+#  results_mtry$rmse[k] <- out_k$errors["rmse"]
+#  results_mtry$mae[k]  <- out_k$errors["mae"]
+#}
+#
+### Save best mtry
+#saveRDS(results_mtry, file = "03_Output/rfres_mtry.rds")
+
+# Read saved best mtry
+results_mtry <- readRDS("03_Output/rfres_mtry.rds")  # Read saved optimization
+
+## Plot 
 best_idx  <- which.min(results_mtry$rmse)
 best_mtry <- results_mtry$mtry[best_idx]
 
-best_mtry
-
-saveRDS(results_mtry, file = "03_Output/rfres_mtry.rds")
-
-#results_mtry <- readRDS("03_Output/rfres_mtry.rds")
-
-# plot
 plot_mtry <- ggplot(results_mtry, aes(x = mtry, y = rmse)) +
   geom_line() +
   geom_point(size = 2) +
@@ -110,18 +116,14 @@ Y=cbind(Y,dum=dum)
 nprev <- 180
 
 set.seed(123)
-
 rf1_1 <- rf.rolling.window(Y,nprev,1,1)
 saveRDS(rf1_1, file= "03_Output/rf1_1.rds")
-
 
 rf1_1$errors
 #rf1_1$pred
 
-
 rf1_3 <- rf.rolling.window(Y,nprev,1,3)
 saveRDS(rf1_3, file= "03_Output/rf1_3.rds")
-
 
 rf1_3$errors
 #rf1_3$pred

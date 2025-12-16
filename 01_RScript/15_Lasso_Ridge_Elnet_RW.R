@@ -26,25 +26,34 @@ fred[, which(date=="2015-12-01")]
 dt_s1 <- data[1:fred[, which(date=="2015-12-01")], ]
 dt_s2 <- copy(data)
 
-### Run for different lags and samples
-## Parameter Selection Using Sample 1
+#### Run for different lags and samples
+### Parameter Selection Using Sample 1
 npred1 <- nrow(dt_s1) - fred[, which(date=="2000-12-01")]  # 180
 Y_train_val1 <- dt_s1[1:(nrow(dt_s1)-npred1),]
-## Parameter Selection Using Sample 1 Lag 1
-# Select Lambda for Lasso Lag1
-best_lam_lasso_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=1, nlambda=25)  
-blam_l1 <- best_lam_lasso_all_1$best_lam  # 0.016912
-#blam_l1 <- 0.016912
-# Select Lambda for Ridge Lag1
-best_lam_ridge_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=0, nlambda=25)  
-blam_r1 <- best_lam_ridge_all_1$best_lam  # 1.57
-#blam_r1 <- 1.57
-# Select Alpha and Lambda for ElNet Lag1
-best_alp_all_1 <- get_best_alpha(Y_train_val1, npred1, 1, lag=1, alpha_grid="el", lambda="auto", nlambda=25)
-balp1   <- best_alp_all_1$best_alp  # 0.4
-blam_e1 <- best_alp_all_1$best_lam  # 0.6
-#balp_e1 <- 0.4
-#blam_e1 <- 0.049153 
+
+#
+##
+### Note: Parameter selection takes time. The results are calculated once and the
+### Note: values from this calculations are used in the following code. If a new
+### Note: optimization is wanted, the below code can be run with deleting the "#"s. 
+##
+#
+
+### Parameter Selection Using Sample 1 Lag 1
+## Select Lambda for Lasso Lag1
+#best_lam_lasso_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=1, nlambda=25)  
+#blam_l1 <- best_lam_lasso_all_1$best_lam  # 0.016912
+blam_l1 <- 0.016912
+## Select Lambda for Ridge Lag1
+#best_lam_ridge_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=0, nlambda=25)  
+#blam_r1 <- best_lam_ridge_all_1$best_lam  # 1.57
+blam_r1 <- 1.57
+## Select Alpha and Lambda for ElNet Lag1
+#best_alp_all_1 <- get_best_alpha(Y_train_val1, npred1, 1, lag=1, alpha_grid="el", lambda="auto", nlambda=25)
+#balp1   <- best_alp_all_1$best_alp  # 0.4
+#blam_e1 <- best_alp_all_1$best_lam  # 0.049153
+balp_e1 <- 0.4
+blam_e1 <- 0.049153 
 
 ### Parameter Selection Using Sample 1 Lag 3
 ## Select Lambda for Lasso Lag3

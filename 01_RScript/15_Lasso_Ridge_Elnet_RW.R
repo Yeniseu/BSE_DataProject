@@ -1,6 +1,6 @@
 # Author: Orhun Ozel
-# Date: 26/11/2025
-# Scope: Apply Lasso Ridge ElNet
+# Date  : 26/11/2025
+# Scope : Apply Lasso Ridge ElNet
 rm(list = ls())
 source("01_RScript/00_Functions_Lasso.R")
 library(data.table)
@@ -38,46 +38,49 @@ Y_train_val1 <- dt_s1[1:(nrow(dt_s1)-npred1),]
 ### Note: optimization is wanted, the below code can be run with deleting the "#"s. 
 ##
 #
-
 ### Parameter Selection Using Sample 1 Lag 1
 ## Select Lambda for Lasso Lag1
 #best_lam_lasso_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=1, nlambda=25)  
-#blam_l1 <- best_lam_lasso_all_1$best_lam  # 0.016912
-blam_l1 <- 0.016912
 ## Select Lambda for Ridge Lag1
 #best_lam_ridge_all_1 <- get_best_lambda(Y_train_val1, npred1, 1, lag=1, alpha=0, nlambda=25)  
-#blam_r1 <- best_lam_ridge_all_1$best_lam  # 1.57
-blam_r1 <- 1.57
 ## Select Alpha and Lambda for ElNet Lag1
 #best_alp_all_1 <- get_best_alpha(Y_train_val1, npred1, 1, lag=1, alpha_grid="el", lambda="auto", nlambda=25)
-#balp1   <- best_alp_all_1$best_alp  # 0.4
-#blam_e1 <- best_alp_all_1$best_lam  # 0.049153
-balp_e1 <- 0.4
-blam_e1 <- 0.049153 
+## Save results
+#saveRDS(best_lam_lasso_all_1, "03_Output/Lasso_Optimization/best_lam_lasso_all_1.rds")
+#saveRDS(best_lam_ridge_all_1, "03_Output/Lasso_Optimization/best_lam_ridge_all_1.rds")
+#saveRDS(best_alp_all_1      , "03_Output/Lasso_Optimization/best_alp_all_1.rds")
+## Read results
+best_lam_lasso_all_1 <- readRDS("03_Output/Lasso_Optimization/best_lam_lasso_all_1.rds")
+best_lam_ridge_all_1 <- readRDS("03_Output/Lasso_Optimization/best_lam_ridge_all_1.rds")
+best_alp_all_1       <- readRDS("03_Output/Lasso_Optimization/best_alp_all_1.rds")
+
+## Define best parameters
+blam_l1 <- best_lam_lasso_all_1$best_lam  # 0.016912
+blam_r1 <- best_lam_ridge_all_1$best_lam  # 1.57
+balp_e1 <- best_alp_all_1$best_alp  # 0.4
+blam_e1 <- best_alp_all_1$best_lam  # 0.049153
+
 
 ### Parameter Selection Using Sample 1 Lag 3
 ## Select Lambda for Lasso Lag3
 #best_lam_lasso_all_1_l3 <- get_best_lambda(Y_train_val1, npred1, 1, lag=3, alpha=1, nlambda=25)  
-#blam_l1_l3 <- best_lam_lasso_all_1_l3$best_lam  # 0.0278
-##blam_l1_l3 <- 0.0278
 ## Select Lambda for Lasso Lag3
 #best_lam_ridge_all_1_l3 <- get_best_lambda(Y_train_val1, npred1, 1, lag=3, alpha=0, nlambda=25)  
-#blam_r1_l3 <- best_lam_ridge_all_1_l3$best_lam  # 2.13
-##blam_r1_l3 <- 2.13
 ## Select Alpha and Lambda for ElNet Lag3
 #best_alp_all_1_l3 <- get_best_alpha(Y_train_val1, npred1, 1, lag=3, alpha_grid="el", lambda="auto")
+#blam_l1_l3 <- best_lam_lasso_all_1_l3$best_lam  # 0.0278
+#blam_r1_l3 <- best_lam_ridge_all_1_l3$best_lam  # 2.13
 #balp1_e1_l3 <- best_alp_all_1_l3$best_alp  # 
 #balp1_e1_l3 <- best_alp_all_1_l3$best_lam  # 
-##balp1_e1_l3 <- 0
-##balp1_e1_l3 <- 0
+
 
 ## Sample 1: Train: 1960-01-01:2000-12-01.  Test: 2001-01-01:2015-12-01 
-lasso_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=1    , lambda=blam_l1)
-lasso_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=1    , lambda=blam_l1)
-ridge_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=0    , lambda=blam_r1)
-ridge_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=0    , lambda=blam_r1)
-elnet_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=balp1, lambda=blam_e1)
-elnet_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=balp1, lambda=blam_e1)
+lasso_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=1      , lambda=blam_l1)
+lasso_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=1      , lambda=blam_l1)
+ridge_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=0      , lambda=blam_r1)
+ridge_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=0      , lambda=blam_r1)
+elnet_s1_l1 <- lasso_roll_win(dt_s1, npred1, 1, lag=1, alpha=balp_e1, lambda=blam_e1)
+elnet_s1_l3 <- lasso_roll_win(dt_s1, npred1, 1, lag=3, alpha=balp_e1, lambda=blam_e1)
 rw_s1_l1 <- sqrt(mean((tail(dt_s1[, "inf"],npred1)-tail(shift(dt_s1[, "inf"],1),npred1))^2))
 rw_s1_l3 <- sqrt(mean((tail(dt_s1[, "inf"],npred1)-tail(shift(dt_s1[, "inf"],3),npred1))^2))
 window1 <- nrow(dt_s1)-npred1
